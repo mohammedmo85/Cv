@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منشئ السيرة الذاتية - مندوب مبيعات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1B241D;
+    --ink-soft:#5B6459;
+    --bg:#F1F3EE;
+    --panel:#FFFFFF;
+    --accent:#2C6E4F;
+    --accent-dark:#1E4F39;
+    --gold:#B4842E;
+    --border:#DCE2D8;
+    --danger:#B0433A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Tajawal',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .app{display:flex;flex-direction:column;min-height:100vh;}
+
+  header.topbar{
+    position:sticky;top:0;z-index:50;
+    background:var(--panel);
+    border-bottom:1px solid var(--border);
+    padding:10px 14px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:16px;color:var(--accent-dark);}
+  .brand-mark{
+    width:26px;height:26px;border-radius:50%;
+    border:3px solid var(--accent);position:relative;flex-shrink:0;
+  }
+  .brand-mark::after{
+    content:"";position:absolute;inset:6px;border-radius:50%;background:var(--gold);
+  }
+  .export-actions{display:flex;gap:6px;}
+  .btn{
+    font-family:inherit;font-size:13px;font-weight:700;
+    border-radius:8px;padding:8px 12px;border:1px solid var(--border);
+    background:var(--panel);color:var(--ink);cursor:pointer;
+    display:flex;align-items:center;gap:5px;white-space:nowrap;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn-gold{background:var(--gold);border-color:var(--gold);color:#fff;}
+
+  .tabs{display:flex;gap:6px;}
+  .tab-btn{
+    flex:1;font-family:inherit;font-size:13px;font-weight:700;
+    padding:8px 0;border-radius:8px;border:1px solid var(--border);
+    background:var(--bg);color:var(--ink-soft);cursor:pointer;
+  }
+  .tab-btn.active{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff;}
+
+  main{flex:1;display:flex;gap:0;padding:12px;max-width:1180px;margin:0 auto;width:100%;}
+  .pane{width:100%;}
+  #editPane, #previewPane{display:none;}
+  #editPane.show, #previewPane.show{display:block;}
+
+  .card{
+    background:var(--panel);border:1px solid var(--border);border-radius:12px;
+    padding:14px;margin-bottom:12px;
+  }
+  .card h2{
+    font-size:14px;margin:0 0 10px;color:var(--accent-dark);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .field{margin-bottom:10px;}
+  .field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:500;}
+  .field input, .field textarea{
+    width:100%;font-family:inherit;font-size:14px;padding:9px 10px;
+    border:1px solid var(--border);border-radius:8px;background:#FBFCFA;color:var(--ink);
+  }
+  .field input:focus, .field textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
+  .field textarea{resize:vertical;min-height:64px;line-height:1.6;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .hint{font-size:11px;color:var(--ink-soft);margin-top:-6px;margin-bottom:10px;}
+
+  .entry{
+    border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;background:#FAFBF8;
+    position:relative;
+  }
+  .entry-remove{
+    position:absolute;top:8px;left:8px;
+    background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;line-height:1;
+  }
+  .add-btn{
+    width:100%;padding:9px;border-radius:8px;border:1px dashed var(--accent);
+    background:#fff;color:var(--accent-dark);font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;
+  }
+
+  .direction-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);margin-bottom:10px;}
+  .direction-toggle button{
+    font-family:inherit;font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);
+    background:#fff;cursor:pointer;
+  }
+  .direction-toggle button.active{background:var(--accent-dark);color:#fff;border-color:var(--accent-dark);}
+
+  #resumeSheet{
+    background:#fff;border:1px solid var(--border);border-radius:4px;
+    padding:34px 30px;max-width:760px;margin:0 auto;
+    font-family:'Tajawal',Arial,sans-serif;color:#17201A;line-height:1.55;
+  }
+  #resumeSheet.ltr{direction:ltr;text-align:left;}
+  #resumeSheet.rtl{direction:rtl;text-align:right;}
+  .r-name{font-size:24px;font-weight:800;margin:0 0 2px;color:#152219;}
+  .r-title{font-size:15px;font-weight:500;color:var(--accent-dark);margin:0 0 8px;}
+  .r-contact{font-size:12.5px;color:#40473F;margin:0 0 16px;}
+  .r-section{margin-bottom:16px;}
+  .r-section h3{
+    font-size:13px;letter-spacing:.2px;font-weight:800;color:#152219;
+    border-bottom:2px solid var(--accent);padding-bottom:4px;margin:0 0 8px;
+  }
+  .r-summary{font-size:13px;color:#2B322C;margin:0;}
+  .r-exp-item{margin-bottom:10px;}
+  .r-exp-head{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;flex-wrap:wrap;}
+  .r-exp-role{font-weight:700;color:#152219;}
+  .r-exp-company{font-weight:500;color:var(--accent-dark);}
+  .r-exp-meta{font-size:12px;color:#5B6459;white-space:nowrap;}
+  .r-exp-bullets{margin:5px 0 0;padding-inline-start:18px;font-size:12.5px;color:#2B322C;}
+  .r-exp-bullets li{margin-bottom:2px;}
+  .r-edu-item{font-size:13px;margin-bottom:6px;}
+  .r-edu-degree{font-weight:700;color:#152219;}
+  .r-skills{display:flex;flex-wrap:wrap;gap:6px;}
+  .r-skill-pill{
+    font-size:12px;padding:3px 10px;border-radius:20px;background:#EAF3EE;color:var(--accent-dark);font-weight:500;
+  }
+  .r-plain-list{font-size:12.5px;color:#2B322C;margin:0;padding-inline-start:18px;}
+
+  @media(min-width:920px){
+    header.topbar{padding:12px 20px;}
+    .tabs{display:none;}
+    #editPane, #previewPane{display:block !important;}
+    main{gap:20px;align-items:flex-start;}
+    #editPane{width:420px;flex-shrink:0;}
+    #previewPane{flex:1;position:sticky;top:78px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand"><span class="brand-mark"></span>منشئ سيرة المبيعات</div>
+      <div class="export-actions">
+        <button class="btn btn-primary" id="exportPdfBtn">تنزيل PDF</button>
+        <button class="btn btn-gold" id="exportDocBtn">تنزيل Word</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="edit">تحرير البيانات</button>
+      <button class="tab-btn" data-tab="preview">معاينة السيرة</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="pane show" id="editPane">
+
+      <div class="card">
+        <h2>البيانات الشخصية</h2>
+        <div class="field"><label>الاسم الكامل</label><input id="f_name" placeholder="محمد أحمد"></div>
+        <div class="field"><label>المسمى الوظيفي</label><input id="f_title" placeholder="مندوب مبيعات أول"></div>
+        <div class="row2">
+          <div class="field"><label>الهاتف</label><input id="f_phone" placeholder="05xxxxxxxx"></div>
+          <div class="field"><label>البريد الإلكتروني</label><input id="f_email" placeholder="name@email.com"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>المدينة</label><input id="f_city" placeholder="الرياض، السعودية"></div>
+          <div class="field"><label>LinkedIn (اختياري)</label><input id="f_linkedin" placeholder="linkedin.com/in/..."></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>الملخص المهني</h2>
+        <div class="field">
+          <textarea id="f_summary" placeholder="مندوب مبيعات بخبرة 5 سنوات في مبيعات B2B، حقق نسبة 120% من الهدف السنوي وزاد قاعدة العملاء بنسبة 30%."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>الخبرة العملية</h2>
+        <div id="expList"></div>
+        <button class="add-btn" id="addExp">+ إضافة خبرة عملية</button>
+      </div>
+
+      <div class="card">
+        <h2>المهارات</h2>
+        <div class="field">
+          <textarea id="f_skills" placeholder="مبيعات B2B، Salesforce، التفاوض، توليد العملاء المحتملين، إدارة الحسابات"></textarea>
+        </div>
+        <div class="hint">افصل بين المهارات بفاصلة (،)</div>
+      </div>
+
+      <div class="card">
+        <h2>التعليم</h2>
+        <div id="eduList"></div>
+        <button class="add-btn" id="addEdu">+ إضافة مؤهل دراسي</button>
+      </div>
+
+      <div class="card">
+        <h2>الشهادات (اختياري)</h2>
+        <div class="field"><textarea id="f_certs" placeholder="سطر لكل شهادة، مثال:
+شهادة HubSpot Sales Software - 2024"></textarea></div>
+      </div>
+
+      <div class="card">
+        <h2>اللغات (اختياري)</h2>
+        <div class="field"><textarea id="f_langs" placeholder="العربية - اللغة الأم
+الإنجليزية - ممتاز"></textarea></div>
+      </div>
+
+    </section>
+
+    <section class="pane" id="previewPane">
+      <div class="direction-toggle">
+        اتجاه نص السيرة:
+        <button data-dir="rtl" class="active" id="dirRtlBtn">عربي (RTL)</button>
+        <button data-dir="ltr" id="dirLtrBtn">إنجليزي (LTR)</button>
+      </div>
+      <div id="resumeSheet" class="rtl"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+let state = {
+  name:"", title:"", phone:"", email:"", city:"", linkedin:"",
+  summary:"", skills:"", certs:"", langs:"",
+  dir:"rtl",
+  experiences:[{company:"",role:"",location:"",start:"",end:"",bullets:""}],
+  education:[{degree:"",school:"",year:""}]
+};
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+function bindSimpleFields(){
+  const map = {f_name:"name",f_title:"title",f_phone:"phone",f_email:"email",f_city:"city",
+    f_linkedin:"linkedin",f_summary:"summary",f_skills:"skills",f_certs:"certs",f_langs:"langs"};
+  Object.keys(map).forEach(id=>{
+    const el = document.getElementById(id);
+    el.addEventListener("input", ()=>{ state[map[id]] = el.value; renderPreview(); });
+  });
+}
+
+function renderExpForm(){
+  const wrap = document.getElementById("expList");
+  wrap.innerHTML = "";
+  state.experiences.forEach((exp, idx)=>{
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `
+      ${state.experiences.length>1?'<button class="entry-remove" data-idx="'+idx+'" title="حذف">×</button>':''}
+      <div class="field"><label>المسمى الوظيفي</label><input data-k="role" data-idx="${idx}" value="${escapeAttr(exp.role)}" placeholder="مندوب مبيعات ميداني"></div>
+      <div class="field"><label>اسم الشركة</label><input data-k="company" data-idx="${idx}" value="${escapeAttr(exp.company)}" placeholder="شركة النور التجارية"></div>
+      <div class="row2">
+        <div class="field"><label>الموقع</label><input data-k="location" data-idx="${idx}" value="${escapeAttr(exp.location)}" placeholder="جدة"></div>
+        <div class="field"><label>الفترة</label><input data-k="start" data-idx="${idx}" value="${escapeAttr(exp.start)}" placeholder="يناير 2022 - حتى الآن"></div>
+      </div>
+      <div class="field"><label>الإنجازات (سطر لكل إنجاز)</label>
+        <textarea data-k="bullets" data-idx="${idx}" placeholder="حققت 130% من الهدف الشهري لمدة 6 أشهر
+زدت قاعدة العملاء بنسبة 25% خلال سنة">${escapeHtml(exp.bullets)}</textarea>
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll("input,textarea").forEach(el=>{
+    el.addEventListener("input", e=>{
+      const idx = +e.target.dataset.idx, k = e.target.dataset.k;
+      state.experiences[idx][k] = e.target.value;
+      renderPreview();
+    });
+  });
+  wrap.querySelectorAll(".entry-remove").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.target.dataset.idx;
+      state.experiences.splice(idx,1);
+      renderExpForm(); renderPreview();
+    });
+  });
+}
+
+function renderEduForm(){
+  const wrap = document.getElementById("eduList");
+  wrap.innerHTML = "";
+  state.education.forEach((ed, idx)=>{
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `
+      ${state.education.length>1?'<button class="entry-remove" data-idx="'+idx+'" title="حذف">×</button>':''}
+      <div class="field"><label>الدرجة العلمية / التخصص</label><input data-k="degree" data-idx="${idx}" value="${escapeAttr(ed.degree)}" placeholder="بكالوريوس إدارة أعمال"></div>
+      <div class="row2">
+        <div class="field"><label>الجهة التعليمية</label><input data-k="school" data-idx="${idx}" value="${escapeAttr(ed.school)}" placeholder="جامعة الملك سعود"></div>
+        <div class="field"><label>سنة التخرج</label><input data-k="year" data-idx="${idx}" value="${escapeAttr(ed.year)}" placeholder="2019"></div>
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll("input").forEach(el=>{
+    el.addEventListener("input", e=>{
+      const idx = +e.target.dataset.idx, k = e.target.dataset.k;
+      state.education[idx][k] = e.target.value;
+      renderPreview();
+    });
+  });
+  wrap.querySelectorAll(".entry-remove").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      const idx = +e.target.dataset.idx;
+      state.education.splice(idx,1);
+      renderEduForm(); renderPreview();
+    });
+  });
+}
+
+function escapeHtml(s){
+  return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escapeAttr(s){
+  return (s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderPreview(){
+  const sheet = document.getElementById("resumeSheet");
+  sheet.className = state.dir;
+
+  const contactParts = [state.phone, state.email, state.city, state.linkedin].filter(Boolean);
+  const contactLine = contactParts.join("  |  ");
+
+  let html = "";
+  html += `<div class="r-name">${escapeHtml(state.name)||"الاسم الكامل"}</div>`;
+  if(state.title) html += `<div class="r-title">${escapeHtml(state.title)}</div>`;
+  if(contactLine) html += `<div class="r-contact">${escapeHtml(contactLine)}</div>`;
+
+  if(state.summary.trim()){
+    html += `<div class="r-section"><h3>الملخص المهني</h3><p class="r-summary">${escapeHtml(state.summary)}</p></div>`;
+  }
+
+  const validExp = state.experiences.filter(e=>e.role||e.company);
+  if(validExp.length){
+    html += `<div class="r-section"><h3>الخبرة العملية</h3>`;
+    validExp.forEach(exp=>{
+      html += `<div class="r-exp-item">
+        <div class="r-exp-head">
+          <span><span class="r-exp-role">${escapeHtml(exp.role)}</span>${exp.company?' — <span class="r-exp-company">'+escapeHtml(exp.company)+'</span>':''}</span>
+          <span class="r-exp-meta">${escapeHtml([exp.start,exp.location].filter(Boolean).join(" • "))}</span>
+        </div>`;
+      const bullets = exp.bullets.split("\n").map(b=>b.trim()).filter(Boolean);
+      if(bullets.length){
+        html += `<ul class="r-exp-bullets">` + bullets.map(b=>`<li>${escapeHtml(b)}</li>`).join("") + `</ul>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(state.skills.trim()){
+    const skills = state.skills.split(/[،,]/).map(s=>s.trim()).filter(Boolean);
+    html += `<div class="r-section"><h3>المهارات</h3><div class="r-skills">` +
+      skills.map(s=>`<span class="r-skill-pill">${escapeHtml(s)}</span>`).join("") + `</div></div>`;
+  }
+
+  const validEdu = state.education.filter(e=>e.degree||e.school);
+  if(validEdu.length){
+    html += `<div class="r-section"><h3>التعليم</h3>`;
+    validEdu.forEach(ed=>{
+      html += `<div class="r-edu-item"><span class="r-edu-degree">${escapeHtml(ed.degree)}</span>${ed.school?' — '+escapeHtml(ed.school):''}${ed.year?' ('+escapeHtml(ed.year)+')':''}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if(state.certs.trim()){
+    const certs = state.certs.split("\n").map(c=>c.trim()).filter(Boolean);
+    html += `<div class="r-section"><h3>الشهادات</h3><ul class="r-plain-list">` + certs.map(c=>`<li>${escapeHtml(c)}</li>`).join("") + `</ul></div>`;
+  }
+
+  if(state.langs.trim()){
+    const langs = state.langs.split("\n").map(l=>l.trim()).filter(Boolean);
+    html += `<div class="r-section"><h3>اللغات</h3><ul class="r-plain-list">` + langs.map(l=>`<li>${escapeHtml(l)}</li>`).join("") + `</ul></div>`;
+  }
+
+  sheet.innerHTML = html;
+}
+
+function switchTab(tab){
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
+  document.getElementById("editPane").classList.toggle("show", tab==="edit");
+  document.getElementById("previewPane").classList.toggle("show", tab==="preview");
+}
+document.querySelectorAll(".tab-btn").forEach(b=>{
+  b.addEventListener("click", ()=>switchTab(b.dataset.tab));
+});
+
+document.getElementById("dirRtlBtn").addEventListener("click", ()=>{
+  state.dir="rtl";
+  document.getElementById("dirRtlBtn").classList.add("active");
+  document.getElementById("dirLtrBtn").classList.remove("active");
+  renderPreview();
+});
+document.getElementById("dirLtrBtn").addEventListener("click", ()=>{
+  state.dir="ltr";
+  document.getElementById("dirLtrBtn").classList.add("active");
+  document.getElementById("dirRtlBtn").classList.remove("active");
+  renderPreview();
+});
+
+document.getElementById("addExp").addEventListener("click", ()=>{
+  state.experiences.push({company:"",role:"",location:"",start:"",end:"",bullets:""});
+  renderExpForm(); renderPreview();
+});
+document.getElementById("addEdu").addEventListener("click", ()=>{
+  state.education.push({degree:"",school:"",year:""});
+  renderEduForm(); renderPreview();
+});
+
+document.getElementById("exportPdfBtn").addEventListener("click", async ()=>{
+  const btn = document.getElementById("exportPdfBtn");
+  const original = btn.textContent;
+  btn.textContent = "جاري التجهيز...";
+  const sheet = document.getElementById("resumeSheet");
+  try{
+    const canvas = await html2canvas(sheet, {scale:2, backgroundColor:"#ffffff"});
+    const imgData = canvas.toDataURL("image/png");
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p","mm","a4");
+    const pageW = 210, pageH = 297;
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    let heightLeft = imgH;
+    let position = 0;
+    pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+    heightLeft -= pageH;
+    while(heightLeft > 0){
+      position = heightLeft - imgH;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgW, imgH);
+      heightLeft -= pageH;
+    }
+    const fname = (state.name.trim() || "resume").replace(/\s+/g,"_");
+    pdf.save(fname + ".pdf");
+  }catch(err){
+    alert("حدث خطأ أثناء إنشاء PDF، حاول مرة أخرى.");
+  }finally{
+    btn.textContent = original;
+  }
+});
+
+document.getElementById("exportDocBtn").addEventListener("click", ()=>{
+  const sheet = document.getElementById("resumeSheet");
+  const dirAttr = state.dir;
+  const docHtml = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>CV</title>
+<style>
+body{font-family:Tahoma,Arial,sans-serif;direction:${dirAttr};}
+.r-name{font-size:22pt;font-weight:bold;margin:0 0 2pt;}
+.r-title{font-size:13pt;color:#1E4F39;margin:0 0 6pt;}
+.r-contact{font-size:10.5pt;color:#40473F;margin:0 0 14pt;}
+.r-section{margin-bottom:14pt;}
+.r-section h3{font-size:11.5pt;border-bottom:2px solid #2C6E4F;padding-bottom:3pt;}
+.r-exp-head{font-size:11.5pt;}
+.r-exp-role{font-weight:bold;}
+.r-exp-company{color:#1E4F39;}
+.r-exp-meta{font-size:10pt;color:#5B6459;}
+.r-exp-bullets{font-size:10.5pt;}
+.r-skill-pill{font-size:10pt;background:#EAF3EE;color:#1E4F39;padding:2pt 8pt;border-radius:10pt;margin-left:4pt;display:inline-block;}
+.r-edu-item, .r-plain-list li{font-size:10.5pt;}
+</style>
+</head>
+<body>${sheet.innerHTML}</body></html>`;
+  const blob = new Blob(['\ufeff', docHtml], {type:"application/msword"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const fname = (state.name.trim() || "resume").replace(/\s+/g,"_");
+  a.href = url;
+  a.download = fname + ".doc";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+bindSimpleFields();
+renderExpForm();
+renderEduForm();
+renderPreview();
+</script>
+</body>
+</html>
